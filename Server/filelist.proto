@@ -1,0 +1,26 @@
+syntax = "proto3";
+option csharp_namespace = "Proto";
+package Proto;
+
+message FileListRequest {
+    repeated File Files = 1;
+}
+
+message File {
+    string Path = 1;
+}
+
+message ImageFile {
+    File File = 1;
+    Size Size = 2;
+    bytes Content = 3;
+}
+
+message Size {
+    int32 Width = 1;
+    int32 Height = 2;
+}
+
+message SendNextFile {
+
+}
