@@ -65,7 +65,8 @@ Task.Run(() =>
                     fileInfos,
                     PreloadingIteratorMemoryLimits.Max
                         .WithMaxMemoryGb(8)
-                        .WithFreeLimitGb(1)
+                        .WithFreeLimitGb(1),
+                    targetSize:new System.Drawing.Size(1920,1080)
                 );
 
                 var getByte = new Func<byte>(() =>
@@ -78,6 +79,8 @@ Task.Run(() =>
                 var j = 0;
                 foreach (var img in iterator)
                 {
+                    Console.WriteLine($"Sending {img.File.FullName}");
+
                     //Console.WriteLine($"Waiting for file request");
                     getByte();
                     //Console.WriteLine($"Sending file of length {img.Length}");

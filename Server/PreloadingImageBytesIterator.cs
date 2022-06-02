@@ -6,27 +6,43 @@ public class PreloadingImageBytesIterator : PreloadingIterator<FileInfo, ImageBy
 {
     public PreloadingImageBytesIterator(
         IEnumerable<FileInfo> iterator,
-        PreloadingIteratorMemoryLimits limits)
-        : base(iterator, FileToImageTransform, canPreload: limits)
+        PreloadingIteratorMemoryLimits limits,
+        Size? targetSize = null)
+        : base(iterator, (FileInfo file) => FileToImageTransform(file, targetSize), canPreload: limits)
     {
     }
 
-    private static ImageBytes FileToImageTransform(FileInfo file)
+    private static ImageBytes FileToImageTransform(FileInfo file, Size? targetSize = null)
     {
         using (var bitmap = (Bitmap)Image.FromFile(file.FullName))
         {
-            var data = bitmap.LockBits(new Rectangle(Point.Empty, bitmap.Size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            var bytes = new byte[data.Stride * bitmap.Height];
+            Bitmap resized;
 
-            //Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
-            for (int i = 0; i < bytes.Length; i += 3)
+            if (targetSize.HasValue &&
+                targetSize != bitmap.Size)
             {
-                bytes[i + 0] = Marshal.ReadByte(data.Scan0 + i + 2);
-                bytes[i + 1] = Marshal.ReadByte(data.Scan0 + i + 1);
-                bytes[i + 2] = Marshal.ReadByte(data.Scan0 + i + 0);
+                resized = new Bitmap(bitmap, targetSize.Value);
+            }
+            else
+            {
+                resized = bitmap;
             }
 
-            return (file, bitmap.Size, bytes);
+            using (resized)
+            {
+                var data = resized.LockBits(new Rectangle(Point.Empty, resized.Size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+                var bytes = new byte[data.Stride * resized.Height];
+
+                //Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);
+                for (int i = 0; i < bytes.Length; i += 3)
+                {
+                    bytes[i + 0] = Marshal.ReadByte(data.Scan0 + i + 2);
+                    bytes[i + 1] = Marshal.ReadByte(data.Scan0 + i + 1);
+                    bytes[i + 2] = Marshal.ReadByte(data.Scan0 + i + 0);
+                }
+
+                return (file, resized.Size, bytes);
+            }
         }
     }
 }

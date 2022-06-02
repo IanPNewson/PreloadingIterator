@@ -46,7 +46,8 @@ public class PreloadingIterator<TIn, TOut> : IEnumerable<TOut>, IDisposable
                 {
                     if (!_alive) break;
                     var spins = 0;
-                    while (!canPreload(new MemoryInfo()) && _alive)
+                    MemoryInfo memInfo;
+                    while (_alive&& !canPreload(memInfo = new MemoryInfo()))
                     {
                         Thread.Sleep(100);
                         ++spins;
